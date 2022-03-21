@@ -1,0 +1,49 @@
+{
+  "name": "@coinspace/cs-cardano-wallet",
+  "version": "0.0.1",
+  "description": "Cardano Wallet for Coin app",
+  "author": "Coin Crypto Wallet <support@coin.space> (https://coin.space/)",
+  "license": "MIT",
+  "main": "./index.js",
+  "type": "module",
+  "scripts": {
+    "test": "mocha",
+    "lint": "eslint index.js lib/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CoinSpace/cs-cardano-wallet.git"
+  },
+  "dependencies": {
+    "@emurgo/cardano-serialization-lib-browser": "^10.0.4",
+    "bignumber.js": "^9.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.10.0",
+    "eslint-config-coinspace": "^1.2.1"
+  },
+  "eslintConfig": {
+    "extends": [
+      "coinspace"
+    ],
+    "env": {
+      "node": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 2022,
+      "requireConfigFile": false,
+      "sourceType": "module"
+    },
+    "overrides": [
+      {
+        "files": [
+          "*.test.js",
+          "test/*"
+        ],
+        "env": {
+          "mocha": true
+        }
+      }
+    ]
+  }
+}
