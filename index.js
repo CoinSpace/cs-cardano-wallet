@@ -255,7 +255,7 @@ export default class CardanoWallet {
       this.#csSkipMinFee = result.skipMinFee || false;
       this.#csFeeAddresses = result.addresses;
       this.#csFeeOff = result.addresses.length === 0
-        || result.whitelist.includes(this.#getAddress('address'));
+        || result.whitelist.includes(this.#getAddress('base'));
     } catch (err) {
       console.error(err);
     }
