@@ -604,7 +604,7 @@ export default class CardanoWallet {
     if (this.#useTestNetwork) {
       return `https://explorer.cardano-testnet.iohkdev.io/en/transaction?id=${txId}`;
     } else {
-      return `https://explorer.cardano.org/en/transaction?id=${txId}`;
+      return `https://blockchair.com/cardano/transaction/${txId}?from=coinwallet`;
     }
   }
 }
