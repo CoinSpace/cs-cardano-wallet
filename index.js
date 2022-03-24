@@ -287,12 +287,16 @@ export default class CardanoWallet {
   }
 
   #calculateCsFee(value) {
-    return calculateCsFee(value, this.#csFeeOff, this.#csFee, this.#csMinFee, this.#csMaxFee, this.#csSkipMinFee);
+    return calculateCsFee(value, this.#csFeeOff, this.#csFee, this.#csMinFee, this.#csMaxFee,
+      this.#csSkipMinFee, this.#dustThreshold
+    );
   }
 
   // value = value + csFee
   #reverseCsFee(value) {
-    return reverseCsFee(value, this.#csFeeOff, this.#csFee, this.#csMinFee, this.#csMaxFee, this.#csSkipMinFee);
+    return reverseCsFee(value, this.#csFeeOff, this.#csFee, this.#csMinFee, this.#csMaxFee,
+      this.#csSkipMinFee, this.#dustThreshold
+    );
   }
 
   #calculateMinerFee(utxos, outputs) {
