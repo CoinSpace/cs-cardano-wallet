@@ -71,8 +71,7 @@ export default class CardanoWallet {
   #csFeeAddresses = [];
   #csFeeOff = true;
   #dustThreshold;
-  // TODO figure out minimum confirmations
-  #minConfirmations = 10;
+  #minConfirmations = 3;
   #useTestNetwork;
 
   get isLocked() {
@@ -274,6 +273,7 @@ export default class CardanoWallet {
 
   #calculateUtxosForTx() {
     return this.#utxos
+      .filter((utxo) => utxo.confirmations >= this.#minConfirmations)
       .sort((a, b) => {
         if (new BigNumber(a.value).isGreaterThan(b.value)) {
           return -1;
@@ -425,45 +425,54 @@ export default class CardanoWallet {
   }
 
   #transformTxs(txs) {
+    return txs.map((tx) => {
+      return this.#transformTx(tx);
+    });
+  }
+
+  #transformTx(tx) {
     const addresses = this.#getAllAddresses();
     const csFeeAddresses = this.#csFeeAddresses;
-    return txs.map((tx) => {
-      let inputValue = new BigNumber(0);
-      let outputValue = new BigNumber(0);
-      let csFee = new BigNumber(0);
 
-      for (const input of tx.inputs) {
-        if (addresses.includes(input.address)) {
-          inputValue = inputValue.plus(input.value);
-        }
-      }
+    let inputValue = new BigNumber(0);
+    let outputValue = new BigNumber(0);
+    let csFee = new BigNumber(0);
 
-      for (const output of tx.outputs) {
-        if (addresses.includes(output.address)) {
-          outputValue = outputValue.plus(output.value);
-        }
-        if (csFeeAddresses.includes(output.address)) {
-          csFee = csFee.plus(output.value);
-        }
+    for (const input of tx.inputs) {
+      if (addresses.includes(input.address)) {
+        inputValue = inputValue.plus(input.value);
       }
-      const amount = outputValue.minus(inputValue);
-      return {
-        id: tx.hash,
-        amount: amount.toString(10),
-        timestamp: new Date(tx.includedAt * 1000).getTime(),
-        confirmed: tx.confirmations >= this.#minConfirmations,
-        minConf: this.#minConfirmations,
-        confirmations: parseInt(tx.confirmations),
-        fee: csFee.plus(tx.fee).toString(10),
-        isIncoming: amount.isGreaterThanOrEqualTo(0),
-        ins: tx.inputs.map((item) => {
-          return { ...item, amount: item.value };
-        }),
-        outs: tx.outputs.map((item) => {
-          return { ...item, amount: item.value };
-        }),
-      };
-    });
+    }
+
+    for (const output of tx.outputs) {
+      if (addresses.includes(output.address)) {
+        outputValue = outputValue.plus(output.value);
+      }
+      if (csFeeAddresses.includes(output.address)) {
+        csFee = csFee.plus(output.value);
+      }
+    }
+    const fee = csFee.plus(tx.fee).toString(10);
+    let amount = outputValue.minus(inputValue);
+    if (amount.isLessThan(0)) {
+      amount = amount.plus(fee);
+    }
+    return {
+      id: tx.hash,
+      amount: amount.toString(10),
+      timestamp: new Date(tx.includedAt * 1000).getTime(),
+      confirmed: tx.confirmations >= this.#minConfirmations,
+      minConf: this.#minConfirmations,
+      confirmations: parseInt(tx.confirmations),
+      fee: fee.toString(10),
+      isIncoming: amount.isGreaterThanOrEqualTo(0),
+      ins: tx.inputs.map((item) => {
+        return { ...item, amount: item.value };
+      }),
+      outs: tx.outputs.map((item) => {
+        return { ...item, amount: item.value };
+      }),
+    };
   }
 
   async createTx(to, value, fee) {
@@ -600,8 +609,9 @@ export default class CardanoWallet {
     return Buffer.from(transaction.to_bytes()).toString('hex');
   }
 
-  sendTx(transaction) {
-    return this.#apiNode.submitTransaction(transaction);
+  async sendTx(transaction) {
+    const tx = await this.#apiNode.submitTransaction(transaction);
+    return this.#transformTx(tx);
   }
 
   txUrl(txId) {
