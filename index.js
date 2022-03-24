@@ -476,8 +476,18 @@ export default class CardanoWallet {
   }
 
   async createTx(to, value, fee) {
+    if (!to) {
+      throw new Error('Invalid address');
+    }
     if (this.#getAllAddresses().some((address) => address === to)) {
       throw new Error('Destination address equal source address');
+    }
+    let toAddress;
+    try {
+      toAddress = Address.from_bech32(to);
+    } catch (err) {
+      console.error(err);
+      throw new Error('Invalid address');
     }
 
     const amount = new BigNumber(value, 10);
@@ -554,7 +564,7 @@ export default class CardanoWallet {
 
     builder.add_output(
       TransactionOutput.new(
-        Address.from_bech32(to),
+        toAddress,
         Value.new(BigNum.from_str(amount.toString(10)))
       )
     );
