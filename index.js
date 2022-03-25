@@ -17,6 +17,7 @@ import {
   TransactionBuilderConfigBuilder,
   TransactionWitnessSet,
   Vkeywitnesses,
+  ByronAddress,
   // eslint-disable-next-line camelcase
   min_ada_required,
   // eslint-disable-next-line camelcase
@@ -73,6 +74,7 @@ export default class CardanoWallet {
   #dustThreshold;
   #minConfirmations = 3;
   #useTestNetwork;
+  #mockAddress;
 
   get isLocked() {
     return !!this.#xprv;
@@ -154,9 +156,17 @@ export default class CardanoWallet {
     this.#addressType = this.#cache.get('addressType') || this.addressTypes[0];
 
     this.#useTestNetwork = !!options.useTestNetwork;
-    this.#networkID = this.#useTestNetwork
-      ? NetworkInfo.testnet().network_id()
-      : NetworkInfo.mainnet().network_id();
+    if (this.#useTestNetwork) {
+      this.#networkID = NetworkInfo.testnet().network_id();
+      // https://cips.cardano.org/cips/cip19/
+      // eslint-disable-next-line max-len
+      this.#mockAddress = ByronAddress.from_base58('37btjrVyb4KDXBNC4haBVPCrro8AQPHwvCMp3RFhhSVWwfFmZ6wwzSK6JK1hY6wHNmtrpTf1kdbva8TCneM2YsiXT7mrzT21EacHnPpz5YyUdj64na').to_address();
+    } else {
+      this.#networkID = NetworkInfo.mainnet().network_id();
+      // https://github.com/input-output-hk/cardano-addresses/blob/3.9.0/core/lib/Cardano/Address/Style/Byron.hs#L307
+      // eslint-disable-next-line max-len
+      this.#mockAddress = ByronAddress.from_base58('DdzFFzCqrht5uLsviWj6VkHLnDrXdGS188f1JH9VmmymAodgkUkkvS7ciwPHkZFYvpW62yKrbyvRja1ak3Nmyz3Qi76JLYgD1MJ4ecKc').to_address();
+    }
   }
 
   lock() {
@@ -314,12 +324,11 @@ export default class CardanoWallet {
         .max_tx_size(parseInt(this.#protocolParams.maxTxSize))
         .build()
     );
-    const mockAddress = Address.from_bech32(this.getNextAddress());
 
     for (let i = 0; i < outputs; i++) {
       builder.add_output(
         TransactionOutput.new(
-          mockAddress,
+          this.#mockAddress,
           Value.new(BigNum.from_str(this.#dustThreshold.toString(10)))
         )
       );
@@ -484,7 +493,11 @@ export default class CardanoWallet {
     }
     let toAddress;
     try {
-      toAddress = Address.from_bech32(to);
+      if (to.startsWith('addr')) {
+        toAddress = Address.from_bech32(to);
+      } else {
+        toAddress = ByronAddress.from_base58(to).to_address();
+      }
     } catch (err) {
       console.error(err);
       throw new Error('Invalid address');
