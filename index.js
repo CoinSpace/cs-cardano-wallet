@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js';
+import { bech32 } from 'bech32';
 import API from './lib/api.js';
 import { calculateCsFee, reverseCsFee } from './lib/fee.js';
 import { Bip32PrivateKey, Bip32PublicKey } from './lib/bip32ed25519.js';
@@ -636,5 +637,11 @@ export default class CardanoWallet {
     } else {
       return `https://blockchair.com/cardano/transaction/${txId}?from=coinwallet`;
     }
+  }
+
+  exportPrivateKeys() {
+    const words = bech32.toWords(this.#xprv.toBytes());
+    // https://cips.cardano.org/cips/cip5/
+    return bech32.encode('acct_xsk', words, 1000);
   }
 }
