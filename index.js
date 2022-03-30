@@ -1,32 +1,7 @@
 import BigNumber from 'bignumber.js';
-import {
-  Bip32PrivateKey,
-  Bip32PublicKey,
-  NetworkInfo,
-  Address,
-  BaseAddress,
-  StakeCredential,
-  Value,
-  BigNum,
-  LinearFee,
-  Transaction,
-  TransactionHash,
-  TransactionInput,
-  TransactionOutput,
-  TransactionBuilder,
-  TransactionBuilderConfigBuilder,
-  TransactionWitnessSet,
-  Vkeywitnesses,
-  ByronAddress,
-  // eslint-disable-next-line camelcase
-  min_ada_required,
-  // eslint-disable-next-line camelcase
-  hash_transaction,
-  // eslint-disable-next-line camelcase
-  make_vkey_witness,
-} from '@emurgo/cardano-serialization-lib-browser';
 import API from './lib/api.js';
 import { calculateCsFee, reverseCsFee } from './lib/fee.js';
+import { Bip32PrivateKey, Bip32PublicKey } from './lib/bip32ed25519.js';
 
 function harden(num) {
   return 0x80000000 + num;
@@ -35,10 +10,9 @@ function harden(num) {
 const MAX_INPUTS_PER_TX = 400;
 
 function xprvFromSeed(seed) {
-  // TODO figure out entropy usage
   // https://github.com/cardano-foundation/CIPs/tree/master/CIP-1852
   // m/1852'/1815'/0'
-  return Bip32PrivateKey.from_bip39_entropy(Buffer.from(seed, 'hex'), Buffer.alloc(0))
+  return Bip32PrivateKey.fromSeed(Buffer.from(seed, 'hex'))
     .derive(harden(1852)) // purpose
     .derive(harden(1815)) // coin type
     .derive(harden(0)); // account #0
@@ -55,7 +29,6 @@ export default class CardanoWallet {
 
   #xprv;
   #xpub;
-  #networkID;
   #utxos = [];
   #utxosForTx;
   #protocolParams;
@@ -74,7 +47,7 @@ export default class CardanoWallet {
   #dustThreshold;
   #minConfirmations = 3;
   #useTestNetwork;
-  #mockAddress;
+  #CardanoWasm;
 
   get isLocked() {
     return !!this.#xprv;
@@ -113,6 +86,26 @@ export default class CardanoWallet {
     return this.#crypto;
   }
 
+  get #networkID() {
+    if (this.#useTestNetwork) {
+      return this.#CardanoWasm.NetworkInfo.testnet().network_id();
+    } else {
+      return this.#CardanoWasm.NetworkInfo.mainnet().network_id();
+    }
+  }
+
+  get #mockAddress() {
+    if (this.#useTestNetwork) {
+      // https://cips.cardano.org/cips/cip19/
+      // eslint-disable-next-line max-len
+      return this.#CardanoWasm.ByronAddress.from_base58('37btjrVyb4KDXBNC4haBVPCrro8AQPHwvCMp3RFhhSVWwfFmZ6wwzSK6JK1hY6wHNmtrpTf1kdbva8TCneM2YsiXT7mrzT21EacHnPpz5YyUdj64na').to_address();
+    } else {
+      // https://github.com/input-output-hk/cardano-addresses/blob/3.9.0/core/lib/Cardano/Address/Style/Byron.hs#L307
+      // eslint-disable-next-line max-len
+      return this.#CardanoWasm.ByronAddress.from_base58('DdzFFzCqrht5uLsviWj6VkHLnDrXdGS188f1JH9VmmymAodgkUkkvS7ciwPHkZFYvpW62yKrbyvRja1ak3Nmyz3Qi76JLYgD1MJ4ecKc').to_address();
+    }
+  }
+
   constructor(options = {}) {
     if (!options.crypto) {
       throw new TypeError('crypto should be passed');
@@ -144,29 +137,17 @@ export default class CardanoWallet {
       // https://github.com/cardano-foundation/CIPs/tree/master/CIP-1852
       // m/1852'/1815'/0'
       this.#xprv = xprvFromSeed(options.seed);
-      this.#xpub = this.#xprv.to_public();
+      this.#xpub = this.#xprv.toBip32PublicKey();
     } else if (options.publicKey) {
       const xpubs = JSON.parse(options.publicKey);
-      this.#xpub = Bip32PublicKey.from_bech32(xpubs.shelley);
+      this.#xpub = new Bip32PublicKey(Buffer.from(xpubs.shelley, 'hex'));
     } else {
       throw new TypeError('seed or publicKey should be passed');
     }
 
     this.#balance = new BigNumber(this.#cache.get('balance') || 0);
     this.#addressType = this.#cache.get('addressType') || this.addressTypes[0];
-
     this.#useTestNetwork = !!options.useTestNetwork;
-    if (this.#useTestNetwork) {
-      this.#networkID = NetworkInfo.testnet().network_id();
-      // https://cips.cardano.org/cips/cip19/
-      // eslint-disable-next-line max-len
-      this.#mockAddress = ByronAddress.from_base58('37btjrVyb4KDXBNC4haBVPCrro8AQPHwvCMp3RFhhSVWwfFmZ6wwzSK6JK1hY6wHNmtrpTf1kdbva8TCneM2YsiXT7mrzT21EacHnPpz5YyUdj64na').to_address();
-    } else {
-      this.#networkID = NetworkInfo.mainnet().network_id();
-      // https://github.com/input-output-hk/cardano-addresses/blob/3.9.0/core/lib/Cardano/Address/Style/Byron.hs#L307
-      // eslint-disable-next-line max-len
-      this.#mockAddress = ByronAddress.from_base58('DdzFFzCqrht5uLsviWj6VkHLnDrXdGS188f1JH9VmmymAodgkUkkvS7ciwPHkZFYvpW62yKrbyvRja1ak3Nmyz3Qi76JLYgD1MJ4ecKc').to_address();
-    }
   }
 
   lock() {
@@ -181,13 +162,12 @@ export default class CardanoWallet {
       this.#xprv.free();
     }
     this.#xprv = xprvFromSeed(seed);
-    this.#xpub = this.#xprv.to_public();
+    this.#xpub = this.#xprv.toBip32PublicKey();
   }
 
   publicKey() {
     return JSON.stringify({
-      // TODO bech32 or bytes?
-      shelley: this.#xpub.to_bech32(),
+      shelley: this.#xpub.toBytes().toString('hex'),
     });
   }
 
@@ -201,10 +181,14 @@ export default class CardanoWallet {
         .derive(2) // chimeric
         .derive(0);
 
-      return BaseAddress.new(
+      return this.#CardanoWasm.BaseAddress.new(
         this.#networkID,
-        StakeCredential.from_keyhash(utxoPubKey.to_raw_key().hash()),
-        StakeCredential.from_keyhash(stakeKey.to_raw_key().hash())
+        this.#CardanoWasm.StakeCredential.from_keyhash(
+          this.#CardanoWasm.Ed25519KeyHash.from_bytes(Buffer.from(utxoPubKey.toPublicKey().hash(), 'hex'))
+        ),
+        this.#CardanoWasm.StakeCredential.from_keyhash(
+          this.#CardanoWasm.Ed25519KeyHash.from_bytes(Buffer.from(stakeKey.toPublicKey().hash(), 'hex'))
+        )
       ).to_address().to_bech32();
     } else {
       throw new TypeError(`unsupported address type ${type}`);
@@ -220,6 +204,7 @@ export default class CardanoWallet {
   }
 
   async load() {
+    await this.loadWasm();
     this.#utxos = [];
     for (const address of this.#getAllAddresses()) {
       const utxos = await this.#apiNode.addressesUtxos(address);
@@ -231,13 +216,19 @@ export default class CardanoWallet {
     this.#utxosForTx = this.#calculateUtxosForTx();
     this.#cache.set('balance', this.#balance);
     this.#txsCursor = 0;
-    this.#dustThreshold = new BigNumber(min_ada_required(
-      Value.new(BigNum.from_str('1000000')),
+    this.#dustThreshold = new BigNumber(this.#CardanoWasm.min_ada_required(
+      this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str('1000000')),
       false,
-      BigNum.from_str(`${this.#protocolParams.coinsPerUtxoWord}`)
+      this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.coinsPerUtxoWord}`)
     ).to_str());
     for (const feeRate of this.#feeRates) {
       feeRate.maxAmount = this.#calculateMaxAmount(feeRate);
+    }
+  }
+
+  async loadWasm() {
+    if (!this.#CardanoWasm) {
+      this.#CardanoWasm = await import('@emurgo/cardano-serialization-lib-browser');
     }
   }
 
@@ -310,16 +301,16 @@ export default class CardanoWallet {
   }
 
   #calculateMinerFee(utxos, outputs) {
-    const feeAlgo = LinearFee.new(
-      BigNum.from_str(`${this.#protocolParams.minFeeA}`),
-      BigNum.from_str(`${this.#protocolParams.minFeeB}`)
+    const feeAlgo = this.#CardanoWasm.LinearFee.new(
+      this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.minFeeA}`),
+      this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.minFeeB}`)
     );
-    const builder = TransactionBuilder.new(
-      TransactionBuilderConfigBuilder.new()
+    const builder = this.#CardanoWasm.TransactionBuilder.new(
+      this.#CardanoWasm.TransactionBuilderConfigBuilder.new()
         .fee_algo(feeAlgo)
-        .pool_deposit(BigNum.from_str(`${this.#protocolParams.poolDeposit}`))
-        .key_deposit(BigNum.from_str(`${this.#protocolParams.keyDeposit}`))
-        .coins_per_utxo_word(BigNum.from_str(`${this.#protocolParams.coinsPerUtxoWord}`))
+        .pool_deposit(this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.poolDeposit}`))
+        .key_deposit(this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.keyDeposit}`))
+        .coins_per_utxo_word(this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.coinsPerUtxoWord}`))
         .max_value_size(parseInt(this.#protocolParams.maxValSize))
         .max_tx_size(parseInt(this.#protocolParams.maxTxSize))
         .build()
@@ -327,21 +318,21 @@ export default class CardanoWallet {
 
     for (let i = 0; i < outputs; i++) {
       builder.add_output(
-        TransactionOutput.new(
+        this.#CardanoWasm.TransactionOutput.new(
           this.#mockAddress,
-          Value.new(BigNum.from_str(this.#dustThreshold.toString(10)))
+          this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str(this.#dustThreshold.toString(10)))
         )
       );
     }
 
     for (const utxo of utxos) {
       builder.add_input(
-        Address.from_bech32(utxo.address),
-        TransactionInput.new(
-          TransactionHash.from_bytes(Buffer.from(utxo.txHash, 'hex')),
+        this.#CardanoWasm.Address.from_bech32(utxo.address),
+        this.#CardanoWasm.TransactionInput.new(
+          this.#CardanoWasm.TransactionHash.from_bytes(Buffer.from(utxo.txHash, 'hex')),
           utxo.index
         ),
-        Value.new(BigNum.from_str(utxo.value))
+        this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str(utxo.value))
       );
     }
 
@@ -494,9 +485,9 @@ export default class CardanoWallet {
     let toAddress;
     try {
       if (to.startsWith('addr')) {
-        toAddress = Address.from_bech32(to);
+        toAddress = this.#CardanoWasm.Address.from_bech32(to);
       } else {
-        toAddress = ByronAddress.from_base58(to).to_address();
+        toAddress = this.#CardanoWasm.ByronAddress.from_base58(to).to_address();
       }
     } catch (err) {
       console.error(err);
@@ -549,16 +540,16 @@ export default class CardanoWallet {
       throw error;
     }
 
-    const feeAlgo = LinearFee.new(
-      BigNum.from_str(`${this.#protocolParams.minFeeA}`),
-      BigNum.from_str(`${this.#protocolParams.minFeeB}`)
+    const feeAlgo = this.#CardanoWasm.LinearFee.new(
+      this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.minFeeA}`),
+      this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.minFeeB}`)
     );
-    const builder = TransactionBuilder.new(
-      TransactionBuilderConfigBuilder.new()
+    const builder = this.#CardanoWasm.TransactionBuilder.new(
+      this.#CardanoWasm.TransactionBuilderConfigBuilder.new()
         .fee_algo(feeAlgo)
-        .pool_deposit(BigNum.from_str(`${this.#protocolParams.poolDeposit}`))
-        .key_deposit(BigNum.from_str(`${this.#protocolParams.keyDeposit}`))
-        .coins_per_utxo_word(BigNum.from_str(`${this.#protocolParams.coinsPerUtxoWord}`))
+        .pool_deposit(this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.poolDeposit}`))
+        .key_deposit(this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.keyDeposit}`))
+        .coins_per_utxo_word(this.#CardanoWasm.BigNum.from_str(`${this.#protocolParams.coinsPerUtxoWord}`))
         .max_value_size(parseInt(this.#protocolParams.maxValSize))
         .max_tx_size(parseInt(this.#protocolParams.maxTxSize))
         .build()
@@ -566,36 +557,36 @@ export default class CardanoWallet {
 
     for (const utxo of sources) {
       builder.add_input(
-        Address.from_bech32(utxo.address),
-        TransactionInput.new(
-          TransactionHash.from_bytes(Buffer.from(utxo.txHash, 'hex')),
+        this.#CardanoWasm.Address.from_bech32(utxo.address),
+        this.#CardanoWasm.TransactionInput.new(
+          this.#CardanoWasm.TransactionHash.from_bytes(Buffer.from(utxo.txHash, 'hex')),
           utxo.index
         ),
-        Value.new(BigNum.from_str(utxo.value))
+        this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str(utxo.value))
       );
     }
 
     builder.add_output(
-      TransactionOutput.new(
+      this.#CardanoWasm.TransactionOutput.new(
         toAddress,
-        Value.new(BigNum.from_str(amount.toString(10)))
+        this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str(amount.toString(10)))
       )
     );
 
     if (csFee.isGreaterThan(0)) {
       builder.add_output(
-        TransactionOutput.new(
-          Address.from_bech32(this.#csFeeAddresses[0]),
-          Value.new(BigNum.from_str(csFee.toString(10)))
+        this.#CardanoWasm.TransactionOutput.new(
+          this.#CardanoWasm.Address.from_bech32(this.#csFeeAddresses[0]),
+          this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str(csFee.toString(10)))
         )
       );
     }
 
     if (change.isGreaterThanOrEqualTo(this.#dustThreshold)) {
       builder.add_output(
-        TransactionOutput.new(
-          Address.from_bech32(this.getNextAddress()),
-          Value.new(BigNum.from_str(change.toString(10)))
+        this.#CardanoWasm.TransactionOutput.new(
+          this.#CardanoWasm.Address.from_bech32(this.getNextAddress()),
+          this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str(change.toString(10)))
         )
       );
     }
@@ -607,7 +598,7 @@ export default class CardanoWallet {
 
     // change already added
     // but build_tx fails if add_change_if_needed is not called
-    builder.add_change_if_needed(Address.from_bech32(this.getNextAddress()));
+    builder.add_change_if_needed(this.#CardanoWasm.Address.from_bech32(this.getNextAddress()));
     const tx = builder.build_tx();
 
     return {
@@ -621,14 +612,16 @@ export default class CardanoWallet {
     const privKey = this.#xprv
       .derive(0)
       .derive(0)
-      .to_raw_key();
+      .toPrivateKey();
     const txBody = tx.body();
-    const txHash = hash_transaction(txBody);
-    const witnesses = TransactionWitnessSet.new();
-    const vkeyWitnesses = Vkeywitnesses.new();
-    vkeyWitnesses.add(make_vkey_witness(txHash, privKey));
+    const txHash = this.#CardanoWasm.hash_transaction(txBody);
+    const witnesses = this.#CardanoWasm.TransactionWitnessSet.new();
+    const vkeyWitnesses = this.#CardanoWasm.Vkeywitnesses.new();
+    vkeyWitnesses.add(this.#CardanoWasm.make_vkey_witness(txHash,
+      this.#CardanoWasm.PrivateKey.from_extended_bytes(Buffer.from(privKey.toBytes(), 'hex'))
+    ));
     witnesses.set_vkeys(vkeyWitnesses);
-    const transaction = Transaction.new(txBody, witnesses);
+    const transaction = this.#CardanoWasm.Transaction.new(txBody, witnesses);
     return Buffer.from(transaction.to_bytes()).toString('hex');
   }
 
