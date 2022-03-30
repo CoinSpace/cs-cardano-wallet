@@ -628,6 +628,29 @@ export default class CardanoWallet {
 
   async sendTx(transaction) {
     const tx = await this.#apiNode.submitTransaction(transaction);
+    for (const input of tx.inputs) {
+      this.#utxos = this.#utxos.filter((utxo) => {
+        return !(utxo.txHash === input.hash && utxo.index === input.index);
+      });
+    }
+    const allAddresses = this.#getAllAddresses();
+    for (const output of tx.outputs) {
+      if (allAddresses.includes(output.address)) {
+        this.#utxos.push({
+          address: output.address,
+          confirmations: tx.confirmations,
+          index: output.index,
+          txHash: tx.hash,
+          value: output.value,
+        });
+      }
+    }
+    this.#balance = this.#calculateBalance();
+    this.#cache.set('balance', this.#balance);
+    this.#utxosForTx = this.#calculateUtxosForTx();
+    for (const feeRate of this.#feeRates) {
+      feeRate.maxAmount = this.#calculateMaxAmount(feeRate);
+    }
     return this.#transformTx(tx);
   }
 
