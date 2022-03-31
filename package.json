@@ -9,7 +9,7 @@
   "scripts": {
     "pretest": "node pretest.js",
     "test": "mocha --experimental-wasm-modules --experimental-json-modules",
-    "lint": "eslint index.js lib/*.js test/*.js"
+    "lint": "eslint *.js lib/*.js test/*.js"
   },
   "repository": {
     "type": "git",
