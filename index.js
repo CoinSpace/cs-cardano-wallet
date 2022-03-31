@@ -51,7 +51,7 @@ export default class CardanoWallet {
   #CardanoWasm;
 
   get isLocked() {
-    return !!this.#xprv;
+    return !this.#xprv;
   }
 
   get addressTypes() {
