@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node pretest.js",
-    "test": "mocha --experimental-wasm-modules --experimental-json-modules",
+    "test": "mocha --experimental-wasm-modules",
     "lint": "eslint *.js lib/*.js test/*.js"
   },
   "repository": {

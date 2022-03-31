@@ -1,3 +1,4 @@
+import fs from 'fs/promises';
 import assert from 'assert';
 import CardanoWallet from '../index.js';
 
@@ -7,8 +8,8 @@ const RANDOM_SEED = '3e818cec5efc7505369fae3f162af61130b673fa9b40e5955d5cde22a85
 // eslint-disable-next-line max-len
 const RANDOM_PUBLIC_KEY = '{"shelley":"81f6e54955b5d75d464db7d83febeaf50bd42f3ad7370bfe60e5ac102384b827121ddd71fde4125810e3c9f9ef6b92ca0f50edac3486074083bd4d9762f7d6d0"}';
 
-import PROTOCOL_PARAMETERS from './fixtures/parameters.json';
-import UTXOS from './fixtures/utxos.json';
+const PROTOCOL_PARAMETERS = JSON.parse(await fs.readFile('./test/fixtures/parameters.json'));
+const UTXOS = JSON.parse(await fs.readFile('./test/fixtures/utxos.json'));
 
 const CS_FEE_ADDRESS =
   'addr1qxqjhasmxchytpng9m9m5fs3da2eje0kx896r3ds9mje6zn3kr75q46456hgrv5rl84nwqdmuewq6sr4dna2ewta0nysy2k94u';
