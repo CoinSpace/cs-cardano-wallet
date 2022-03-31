@@ -7,8 +7,8 @@
   "main": "./index.js",
   "type": "module",
   "scripts": {
-    "test": "mocha",
-    "lint": "eslint index.js lib/*.js"
+    "test": "mocha --experimental-wasm-modules --experimental-json-modules",
+    "lint": "eslint index.js lib/*.js test/*.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
   },
   "devDependencies": {
     "eslint": "^8.10.0",
-    "eslint-config-coinspace": "^1.2.1"
+    "eslint-config-coinspace": "^1.2.1",
+    "mocha": "^9.2.2"
   },
   "eslintConfig": {
     "extends": [

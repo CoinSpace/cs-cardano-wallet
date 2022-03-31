@@ -245,7 +245,7 @@ export default class CardanoWallet {
       const result = await this.#requestWeb({
         url: 'api/v3/csfee',
         params: {
-          crypto: 'cardano@cardano',
+          crypto: this.#crypto._id,
         },
         method: 'get',
         seed: 'public',
@@ -603,6 +603,7 @@ export default class CardanoWallet {
     const tx = builder.build_tx();
 
     return {
+      tx,
       sign: () => {
         return this.signTx(tx);
       },
