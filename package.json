@@ -7,6 +7,7 @@
   "main": "./index.js",
   "type": "module",
   "scripts": {
+    "pretest": "node pretest.js",
     "test": "mocha --experimental-wasm-modules --experimental-json-modules",
     "lint": "eslint index.js lib/*.js test/*.js"
   },
