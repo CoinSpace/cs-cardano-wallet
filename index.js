@@ -230,9 +230,15 @@ export default class CardanoWallet {
   async loadWasm() {
     if (!this.#CardanoWasm) {
       if (typeof WebAssembly === 'object') {
-        this.#CardanoWasm = await import('@emurgo/cardano-serialization-lib-browser');
+        this.#CardanoWasm = await import(
+          /* webpackChunkName: '@emurgo/cardano-serialization-lib-browser' */
+          '@emurgo/cardano-serialization-lib-browser'
+        );
       } else {
-        this.#CardanoWasm = await import('@emurgo/cardano-serialization-lib-asmjs');
+        this.#CardanoWasm = await import(
+          /* webpackChunkName: '@emurgo/cardano-serialization-lib-asmjs' */
+          '@emurgo/cardano-serialization-lib-asmjs'
+        );
       }
     }
   }
