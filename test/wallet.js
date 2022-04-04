@@ -1,5 +1,8 @@
 import fs from 'fs/promises';
 import assert from 'assert';
+if (process.argv.includes('--disable-wasm')) {
+  global.WebAssembly = undefined;
+}
 import CardanoWallet from '../index.js';
 
 // either dismiss upset disease clump hazard paddle twist fetch tissue hello buyer

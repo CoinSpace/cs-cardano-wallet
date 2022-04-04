@@ -8,7 +8,9 @@
   "type": "module",
   "scripts": {
     "pretest": "node pretest.js",
+    "build:asm": "esbuild node_modules/@emurgo/cardano-serialization-lib-asmjs/cardano_serialization_lib.js --outfile=asm.js --platform=neutral --bundle --minify",
     "test": "mocha --experimental-wasm-modules",
+    "test:asm": "mocha --disable-wasm",
     "lint": "eslint *.js lib/*.js test/*.js"
   },
   "repository": {
@@ -16,13 +18,14 @@
     "url": "https://github.com/CoinSpace/cs-cardano-wallet.git"
   },
   "dependencies": {
-    "@emurgo/cardano-serialization-lib-asmjs": "^10.0.4",
     "@emurgo/cardano-serialization-lib-browser": "^10.0.4",
     "@stricahq/bip32ed25519": "^1.0.3",
     "bech32": "^2.0.0",
     "bignumber.js": "^9.0.2"
   },
   "devDependencies": {
+    "@emurgo/cardano-serialization-lib-asmjs": "^10.0.4",
+    "esbuild": "^0.14.31",
     "eslint": "^8.10.0",
     "eslint-config-coinspace": "^1.2.1",
     "mocha": "^9.2.2"
