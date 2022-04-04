@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node pretest.js",
-    "build:asm": "esbuild node_modules/@emurgo/cardano-serialization-lib-asmjs/cardano_serialization_lib.js --outfile=asm.js --platform=neutral --bundle --minify",
+    "build:asm": "esbuild node_modules/@emurgo/cardano-serialization-lib-asmjs/cardano_serialization_lib.js --outfile=cardano.asm.js --platform=neutral --bundle --minify",
     "test": "mocha --experimental-wasm-modules",
     "test:asm": "mocha --disable-wasm",
     "lint": "eslint *.js lib/*.js test/*.js"

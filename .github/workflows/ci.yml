@@ -22,11 +22,11 @@ jobs:
       - run: npm run build:asm
       - run: npm run test
       - run: npm run test:asm
-      - name: Upload asm.js
+      - name: Upload cardano.asm.js
         uses: actions/upload-artifact@v3
         with:
           name: asm
-          path: asm.js
+          path: cardano.asm.js
 
   publish:
     needs: buildAndTest
@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: 14
           registry-url: https://npm.pkg.github.com/
-      - name: Download asm.js
+      - name: Download cardano.asm.js
         uses: actions/download-artifact@v3
         with:
           name: asm

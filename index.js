@@ -237,7 +237,7 @@ export default class CardanoWallet {
       } else {
         this.#CardanoWasm = await import(
           /* webpackChunkName: '@emurgo/cardano-serialization-lib-asmjs' */
-          './asm.js'
+          './cardano.asm.js'
         );
       }
     }
