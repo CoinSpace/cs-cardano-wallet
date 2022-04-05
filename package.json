@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node pretest.js",
-    "build:asm": "node esbuild.config.js",
+    "build:asm": "node --max_old_space_size=4096 esbuild.config.js",
     "test": "mocha --experimental-wasm-modules",
     "test:asm": "mocha --disable-wasm",
     "lint": "eslint index.js esbuild.config.js pretest.js lib/*.js test/*.js"
