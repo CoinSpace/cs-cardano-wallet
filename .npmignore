@@ -3,3 +3,4 @@
 .nvmrc
 test/*
 pretest.js
+webpack.config.js

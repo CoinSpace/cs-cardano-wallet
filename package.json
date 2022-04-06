@@ -8,10 +8,10 @@
   "type": "module",
   "scripts": {
     "pretest": "node pretest.js",
-    "build:asm": "node --max_old_space_size=4096 esbuild.config.js",
+    "build:asm": "webpack",
     "test": "mocha --experimental-wasm-modules",
     "test:asm": "mocha --disable-wasm",
-    "lint": "eslint index.js esbuild.config.js pretest.js lib/*.js test/*.js"
+    "lint": "eslint index.js webpack.config.js pretest.js lib/*.js test/*.js"
   },
   "repository": {
     "type": "git",
@@ -27,11 +27,14 @@
     "@babel/core": "^7.17.8",
     "@babel/preset-env": "^7.16.11",
     "@emurgo/cardano-serialization-lib-asmjs": "^10.0.4",
-    "esbuild": "^0.14.31",
-    "esbuild-plugin-babel": "^0.2.3",
+    "babel-loader": "^8.2.4",
+    "core-js": "^3.21.1",
     "eslint": "^8.10.0",
     "eslint-config-coinspace": "^1.2.1",
-    "mocha": "^9.2.2"
+    "mocha": "^9.2.2",
+    "terser-webpack-plugin": "^5.3.1",
+    "webpack": "^5.71.0",
+    "webpack-cli": "^4.9.2"
   },
   "eslintConfig": {
     "extends": [
