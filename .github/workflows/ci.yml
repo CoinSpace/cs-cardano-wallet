@@ -20,6 +20,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.NPM_READ_TOKEN}}
       - run: npm run lint
       - run: npm run build:asm
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
       - run: npm run test
       - run: npm run test:asm
       - name: Upload cardano.asm.js
