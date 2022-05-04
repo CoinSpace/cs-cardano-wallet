@@ -543,7 +543,7 @@ describe('Wallet', () => {
       });
       await wallet.load();
       // eslint-disable-next-line max-len
-      const expected = 'acct_xsk1jpka2mdvn9r90gnft30c08273zj7w0f9mye5j4tuhcvux95gfp068nala5n4ccavdmrypunzhjggre73d9rhmq0cguzrlye49jxmghqjrhwhrl0yzfvppc7fl8hkhyk2pagwmtp5scr5pqaafktk9a7k6qqtec05';
+      const expected = `address,privatekey\n${WALLET_ADDRESS},acct_xsk1jpka2mdvn9r90gnft30c08273zj7w0f9mye5j4tuhcvux95gfp068nala5n4ccavdmrypunzhjggre73d9rhmq0cguzrlye49jxmghqjrhwhrl0yzfvppc7fl8hkhyk2pagwmtp5scr5pqaafktk9a7k6qqtec05`;
       assert.strictEqual(wallet.exportPrivateKeys(), expected);
     });
   });

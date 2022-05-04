@@ -676,6 +676,6 @@ export default class CardanoWallet {
   exportPrivateKeys() {
     const words = bech32.toWords(this.#xprv.toBytes());
     // https://cips.cardano.org/cips/cip5/
-    return bech32.encode('acct_xsk', words, 1000);
+    return `address,privatekey\n${this.getNextAddress()},${bech32.encode('acct_xsk', words, 1000)}`;
   }
 }
