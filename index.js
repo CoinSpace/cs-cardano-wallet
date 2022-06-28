@@ -431,7 +431,7 @@ export default class CardanoWallet {
     this.#txsCursor++;
     return {
       txs: this.#transformTxs(txs),
-      hasMoreTxs: txs.length === this.#txsPerPage,
+      hasMoreTxs: txs.length >= this.#txsPerPage,
     };
   }
 
