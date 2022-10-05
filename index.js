@@ -217,6 +217,10 @@ export default class CardanoWallet {
     this.#utxosForTx = this.#calculateUtxosForTx();
     this.#cache.set('balance', this.#balance);
     this.#txsCursor = 0;
+    // TODO: min_ada_required is deprecated
+    // https://docs.cardano.org/native-tokens/minimum-ada-value-requirement
+    // eslint-disable-next-line max-len
+    // https://github.com/Emurgo/cardano-serialization-lib/blob/11.1.0/rust/pkg/cardano_serialization_lib.js.flow#L163-L166
     this.#dustThreshold = new BigNumber(this.#CardanoWasm.min_ada_required(
       this.#CardanoWasm.Value.new(this.#CardanoWasm.BigNum.from_str('1000000')),
       false,
