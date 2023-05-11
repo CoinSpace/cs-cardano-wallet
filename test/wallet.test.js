@@ -31,9 +31,9 @@ const TRANSACTIONS = JSON.parse(await fs.readFile('./test/fixtures/transactions.
 const CS_FEE_ADDRESS = 'addr1qxqjhasmxchytpng9m9m5fs3da2eje0kx896r3ds9mje6zn3kr75q46456hgrv5rl84nwqdmuewq6sr4dna2ewta0nysy2k94u';
 const CS_FEE = {
   address: CS_FEE_ADDRESS,
-  fee: 0.0005,
-  maxFee: 1 * 1000000,
-  minFee: 100 * 1000000,
+  fee: 0.005,
+  minFee: 0.5,
+  maxFee: 100,
 };
 
 const cardanoATcardano = {
@@ -151,7 +151,7 @@ describe('Cardano Wallet', () => {
           baseURL: 'node',
         }).resolves(PROTOCOL_PARAMETERS);
       const storage = sinon.mock(defaultOptions.storage);
-      storage.expects('set').once().withArgs('balance', '6000000');
+      storage.expects('set').once().withArgs('balance', '504000000');
       storage.expects('save').once();
       const wallet = new Wallet({
         ...defaultOptions,
@@ -159,7 +159,7 @@ describe('Cardano Wallet', () => {
       await wallet.open(RANDOM_PUBLIC_KEY);
       await wallet.load();
       assert.equal(wallet.state, Wallet.STATE_LOADED);
-      assert.equal(wallet.balance.value, 6000000n);
+      assert.equal(wallet.balance.value, 504000000n);
       storage.verify();
     });
   });
@@ -268,7 +268,7 @@ describe('Cardano Wallet', () => {
           .withArgs({
             seed: 'device',
             method: 'GET',
-            url: 'api/v3/csfee',
+            url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
             baseURL: 'web',
           }).resolves(CS_FEE);
@@ -302,7 +302,7 @@ describe('Cardano Wallet', () => {
           .withArgs({
             seed: 'device',
             method: 'GET',
-            url: 'api/v3/csfee',
+            url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
             baseURL: 'web',
           }).resolves(CS_FEE);
@@ -341,7 +341,7 @@ describe('Cardano Wallet', () => {
           .withArgs({
             seed: 'device',
             method: 'GET',
-            url: 'api/v3/csfee',
+            url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
             baseURL: 'web',
           }).resolves(CS_FEE);
@@ -354,12 +354,12 @@ describe('Cardano Wallet', () => {
         await assert.rejects(async () => {
           await wallet.validateAmount({
             address: DESTIONATION_ADDRESS,
-            amount: new Amount(200_000000n, wallet.crypto.decimals),
+            amount: new Amount(550_000000n, wallet.crypto.decimals),
           });
         }, {
           name: 'BigAmountError',
           message: 'Big amount',
-          amount: new Amount(4267687n, wallet.crypto.decimals),
+          amount: new Amount(501_323570n, wallet.crypto.decimals),
         });
       });
 
@@ -380,7 +380,7 @@ describe('Cardano Wallet', () => {
           .withArgs({
             seed: 'device',
             method: 'GET',
-            url: 'api/v3/csfee',
+            url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
             baseURL: 'web',
           }).resolves(CS_FEE);
@@ -393,12 +393,12 @@ describe('Cardano Wallet', () => {
         await assert.rejects(async () => {
           await wallet.validateAmount({
             address: DESTIONATION_ADDRESS,
-            amount: new Amount(20_000000n, wallet.crypto.decimals),
+            amount: new Amount(550_000000n, wallet.crypto.decimals),
           });
         }, {
           name: 'BigAmountConfirmationPendingError',
           message: 'Big amount, confirmation pending',
-          amount: new Amount(4267687n, wallet.crypto.decimals),
+          amount: new Amount(501_323570n, wallet.crypto.decimals),
         });
       });
     });
@@ -422,7 +422,7 @@ describe('Cardano Wallet', () => {
         .withArgs({
           seed: 'device',
           method: 'GET',
-          url: 'api/v3/csfee',
+          url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
           baseURL: 'web',
         }).resolves(CS_FEE);
@@ -434,7 +434,7 @@ describe('Cardano Wallet', () => {
       await wallet.load();
 
       const maxAmount = await wallet.estimateMaxAmount({ address: DESTIONATION_ADDRESS });
-      assert.equal(maxAmount.value, 4267687n);
+      assert.equal(maxAmount.value, 501_323570n);
     });
 
     it('should estimate max amount to be 0', async () => {
@@ -462,7 +462,7 @@ describe('Cardano Wallet', () => {
   });
 
   describe('estimateTransactionFee', () => {
-    it('should estimate transaction fee', async () => {
+    it('should estimate transaction fee (2 ADA)', async () => {
       sinon.stub(defaultOptions.account, 'request')
         .withArgs({
           seed: 'device',
@@ -479,7 +479,7 @@ describe('Cardano Wallet', () => {
         .withArgs({
           seed: 'device',
           method: 'GET',
-          url: 'api/v3/csfee',
+          url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
           baseURL: 'web',
         }).resolves(CS_FEE);
@@ -490,9 +490,42 @@ describe('Cardano Wallet', () => {
       await wallet.load();
       const fee = await wallet.estimateTransactionFee({
         address: DESTIONATION_ADDRESS,
-        amount: new Amount(1n, wallet.crypto.decimals),
+        amount: new Amount(2_000000n, wallet.crypto.decimals),
       });
-      assert.equal(fee.value, 1733061n);
+      assert.equal(fee.value, 1733237n);
+    });
+
+    it('should estimate transaction fee (max amount)', async () => {
+      sinon.stub(defaultOptions.account, 'request')
+        .withArgs({
+          seed: 'device',
+          method: 'GET',
+          url: `api/v1/addresses/${WALLET_ADDRESS}/utxos`,
+          baseURL: 'node',
+        }).resolves(UTXOS)
+        .withArgs({
+          seed: 'device',
+          method: 'GET',
+          url: 'api/v1/parameters',
+          baseURL: 'node',
+        }).resolves(PROTOCOL_PARAMETERS)
+        .withArgs({
+          seed: 'device',
+          method: 'GET',
+          url: 'api/v4/csfee',
+          params: { crypto: 'cardano@cardano' },
+          baseURL: 'web',
+        }).resolves(CS_FEE);
+      const wallet = new Wallet({
+        ...defaultOptions,
+      });
+      await wallet.open(RANDOM_PUBLIC_KEY);
+      await wallet.load();
+      const fee = await wallet.estimateTransactionFee({
+        address: DESTIONATION_ADDRESS,
+        amount: new Amount(501_323570n, wallet.crypto.decimals),
+      });
+      assert.equal(fee.value, 2_676430n);
     });
   });
 
@@ -514,7 +547,7 @@ describe('Cardano Wallet', () => {
         .withArgs({
           seed: 'device',
           method: 'GET',
-          url: 'api/v3/csfee',
+          url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
           baseURL: 'web',
         }).resolves(CS_FEE)
@@ -535,7 +568,7 @@ describe('Cardano Wallet', () => {
         address: DESTIONATION_ADDRESS,
         amount: new Amount(2_000000, wallet.crypto.decimals),
       }, RANDOM_SEED);
-      assert.equal(wallet.balance.value, 2_265179n);
+      assert.equal(wallet.balance.value, 500_266763n);
     });
   });
 

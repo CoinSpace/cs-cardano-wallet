@@ -1,15 +1,9 @@
 {
   "inputs": [
     {
-      "hash": "0df6fffaa856ee9847118d3cb2dbebff007e835ac26037c0a0cfa0a0cff1c824",
-      "index": 0,
-      "value": "4000000",
-      "address": "addr1qy85asg42ckg6ssyn9wzaq9ydu4nu97gvj8749l2p35elf5cs7cgygl2cs5lcj4rmn0mawahcd2pgadmw833tuuh70rqzvdlft"
-    },
-    {
       "hash": "cdad8f84ac861f67716607f164a96672db1ba0a5046f7e4ed0ff86fa41d7019c",
       "index": 0,
-      "value": "2000000",
+      "value": "500000000",
       "address": "addr1qy85asg42ckg6ssyn9wzaq9ydu4nu97gvj8749l2p35elf5cs7cgygl2cs5lcj4rmn0mawahcd2pgadmw833tuuh70rqzvdlft"
     }
   ],
@@ -26,10 +20,10 @@
     },
     {
       "address": "addr1qy85asg42ckg6ssyn9wzaq9ydu4nu97gvj8749l2p35elf5cs7cgygl2cs5lcj4rmn0mawahcd2pgadmw833tuuh70rqzvdlft",
-      "value": "2265179",
+      "value": "496266763",
       "index": 2
     }
   ],
   "confirmations": 0,
-  "fee": "172321"
+  "fee": "170737"
 }
