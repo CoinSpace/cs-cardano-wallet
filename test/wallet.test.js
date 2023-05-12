@@ -46,24 +46,28 @@ const cardanoATcardano = {
   decimals: 6,
 };
 
-const defaultOptions = {
-  crypto: cardanoATcardano,
-  platform: cardanoATcardano,
-  cache: { get() {}, set() {} },
-  settings: {},
-  account: {
-    request(...args) { console.log(args); },
-    market: {
-      getPrice() { return 0.32; },
-    },
-  },
-  apiWeb: 'web',
-  apiNode: 'node',
-  storage: { get() {}, set() {}, save() {} },
-  txPerPage: 5,
-};
+let defaultOptions;
 
 describe('Cardano Wallet', () => {
+  beforeEach(() => {
+    defaultOptions = {
+      crypto: cardanoATcardano,
+      platform: cardanoATcardano,
+      cache: { get() {}, set() {} },
+      settings: {},
+      account: {
+        request(...args) { console.log(args); },
+        market: {
+          getPrice() { return 0.32; },
+        },
+      },
+      apiWeb: 'web',
+      apiNode: 'node',
+      storage: { get() {}, set() {}, save() {} },
+      txPerPage: 5,
+    };
+  });
+
   afterEach(() => {
     sinon.restore();
   });
@@ -429,7 +433,6 @@ describe('Cardano Wallet', () => {
       const wallet = new Wallet({
         ...defaultOptions,
       });
-      await wallet.getCsFeeConfig();
       await wallet.open(RANDOM_PUBLIC_KEY);
       await wallet.load();
 
