@@ -363,7 +363,7 @@ describe('Cardano Wallet', () => {
         }, {
           name: 'BigAmountError',
           message: 'Big amount',
-          amount: new Amount(501_323570n, wallet.crypto.decimals),
+          amount: new Amount(501_311037n, wallet.crypto.decimals),
         });
       });
 
@@ -402,7 +402,7 @@ describe('Cardano Wallet', () => {
         }, {
           name: 'BigAmountConfirmationPendingError',
           message: 'Big amount, confirmation pending',
-          amount: new Amount(501_323570n, wallet.crypto.decimals),
+          amount: new Amount(501_311037n, wallet.crypto.decimals),
         });
       });
     });
@@ -437,7 +437,7 @@ describe('Cardano Wallet', () => {
       await wallet.load();
 
       const maxAmount = await wallet.estimateMaxAmount({ address: DESTIONATION_ADDRESS });
-      assert.equal(maxAmount.value, 501_323570n);
+      assert.equal(maxAmount.value, 501_311037n);
     });
 
     it('should estimate max amount to be 0', async () => {
@@ -526,9 +526,9 @@ describe('Cardano Wallet', () => {
       await wallet.load();
       const fee = await wallet.estimateTransactionFee({
         address: DESTIONATION_ADDRESS,
-        amount: new Amount(501_323570n, wallet.crypto.decimals),
+        amount: new Amount(501_311037n, wallet.crypto.decimals),
       });
-      assert.equal(fee.value, 2_676430n);
+      assert.equal(fee.value, 2_688963n);
     });
   });
 
