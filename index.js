@@ -1,1 +1,1 @@
-export { default } from './lib/wallet.js';
+export { default } from './lib/CardanoWallet.js';
