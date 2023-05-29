@@ -1,4 +1,4 @@
-import { Amount } from 'cs-common';
+import { Amount } from '@coinspace/cs-common';
 import Wallet from '../index.js';
 import assert from 'assert/strict';
 import fs from 'fs/promises';
@@ -99,7 +99,7 @@ describe('Cardano Wallet', () => {
         await wallet.create();
       }, {
         name: 'TypeError',
-        message: 'seed must be an instance of Buffer, undefined provided',
+        message: 'seed must be an instance of Uint8Array or Buffer, undefined provided',
       });
     });
   });
