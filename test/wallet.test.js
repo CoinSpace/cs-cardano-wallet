@@ -61,7 +61,6 @@ describe('Cardano Wallet', () => {
           getPrice() { return 0.32; },
         },
       },
-      apiWeb: 'web',
       apiNode: 'node',
       storage: { get() {}, set() {}, save() {} },
       txPerPage: 5,
@@ -274,7 +273,6 @@ describe('Cardano Wallet', () => {
             method: 'GET',
             url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
-            baseURL: 'web',
           }).resolves(CS_FEE);
         const wallet = new Wallet({
           ...defaultOptions,
@@ -308,7 +306,6 @@ describe('Cardano Wallet', () => {
             method: 'GET',
             url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
-            baseURL: 'web',
           }).resolves(CS_FEE);
         const wallet = new Wallet({
           ...defaultOptions,
@@ -347,7 +344,6 @@ describe('Cardano Wallet', () => {
             method: 'GET',
             url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
-            baseURL: 'web',
           }).resolves(CS_FEE);
         const wallet = new Wallet({
           ...defaultOptions,
@@ -386,7 +382,6 @@ describe('Cardano Wallet', () => {
             method: 'GET',
             url: 'api/v4/csfee',
             params: { crypto: 'cardano@cardano' },
-            baseURL: 'web',
           }).resolves(CS_FEE);
         const wallet = new Wallet({
           ...defaultOptions,
@@ -428,7 +423,6 @@ describe('Cardano Wallet', () => {
           method: 'GET',
           url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
-          baseURL: 'web',
         }).resolves(CS_FEE);
       const wallet = new Wallet({
         ...defaultOptions,
@@ -484,7 +478,6 @@ describe('Cardano Wallet', () => {
           method: 'GET',
           url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
-          baseURL: 'web',
         }).resolves(CS_FEE);
       const wallet = new Wallet({
         ...defaultOptions,
@@ -517,7 +510,6 @@ describe('Cardano Wallet', () => {
           method: 'GET',
           url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
-          baseURL: 'web',
         }).resolves(CS_FEE);
       const wallet = new Wallet({
         ...defaultOptions,
@@ -552,7 +544,6 @@ describe('Cardano Wallet', () => {
           method: 'GET',
           url: 'api/v4/csfee',
           params: { crypto: 'cardano@cardano' },
-          baseURL: 'web',
         }).resolves(CS_FEE)
         .withArgs({
           seed: 'device',
