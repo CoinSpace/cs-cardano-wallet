@@ -165,6 +165,18 @@ describe('Cardano Wallet', () => {
       assert.equal(wallet.balance.value, 504000000n);
       storage.verify();
     });
+
+    it('should set STATE_ERROR on error', async () => {
+      sinon.stub(defaultOptions.account, 'request');
+      const wallet = new Wallet({
+        ...defaultOptions,
+      });
+      await wallet.open(RANDOM_PUBLIC_KEY);
+      await assert.rejects(async () => {
+        await wallet.load();
+      });
+      assert.equal(wallet.state, Wallet.STATE_ERROR);
+    });
   });
 
   describe('getPublicKey', () => {
