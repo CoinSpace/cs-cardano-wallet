@@ -6,6 +6,9 @@
   "license": "MIT",
   "main": "./index.js",
   "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
   "scripts": {
     "lint": "eslint lib test index.js",
     "test": "mocha --reporter spec"

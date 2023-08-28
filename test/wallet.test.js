@@ -1,5 +1,5 @@
 import { Amount } from '@coinspace/cs-common';
-import Wallet from '../index.js';
+import Wallet from '@coinspace/cs-cardano-wallet';
 import assert from 'assert/strict';
 import fs from 'fs/promises';
 import sinon from 'sinon';
@@ -570,11 +570,12 @@ describe('Cardano Wallet', () => {
       await wallet.open(RANDOM_PUBLIC_KEY);
       await wallet.load();
 
-      await wallet.createTransaction({
+      const id = await wallet.createTransaction({
         address: DESTIONATION_ADDRESS,
         amount: new Amount(2_000000, wallet.crypto.decimals),
       }, RANDOM_SEED);
       assert.equal(wallet.balance.value, 500_266763n);
+      assert.equal(id, '1436860d19064e5388a78384409cf3ebbcb7b99c12ddfef58ebf331ce14b5526');
     });
   });
 
