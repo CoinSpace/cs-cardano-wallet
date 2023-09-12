@@ -46,6 +46,8 @@ const cardanoATcardano = {
   decimals: 6,
 };
 
+const COIN_PRICE = 0.32;
+
 let defaultOptions;
 
 describe('Cardano Wallet', () => {
@@ -55,12 +57,7 @@ describe('Cardano Wallet', () => {
       platform: cardanoATcardano,
       cache: { get() {}, set() {} },
       settings: {},
-      account: {
-        request(...args) { console.log(args); },
-        market: {
-          getPrice() { return 0.32; },
-        },
-      },
+      request(...args) { console.log(args); },
       apiNode: 'node',
       storage: { get() {}, set() {}, save() {} },
       txPerPage: 5,
@@ -140,7 +137,7 @@ describe('Cardano Wallet', () => {
 
   describe('load', () => {
     it('should load wallet', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
@@ -167,7 +164,7 @@ describe('Cardano Wallet', () => {
     });
 
     it('should set STATE_ERROR on error', async () => {
-      sinon.stub(defaultOptions.account, 'request');
+      sinon.stub(defaultOptions, 'request');
       const wallet = new Wallet({
         ...defaultOptions,
       });
@@ -222,7 +219,7 @@ describe('Cardano Wallet', () => {
     describe('validateAddress', () => {
       let wallet;
       beforeEach(async () => {
-        sinon.stub(defaultOptions.account, 'request')
+        sinon.stub(defaultOptions, 'request')
           .withArgs({
             seed: 'device',
             method: 'GET',
@@ -267,7 +264,7 @@ describe('Cardano Wallet', () => {
 
     describe('validateAmount', () => {
       it('should be valid amount', async () => {
-        sinon.stub(defaultOptions.account, 'request')
+        sinon.stub(defaultOptions, 'request')
           .withArgs({
             seed: 'device',
             method: 'GET',
@@ -295,12 +292,13 @@ describe('Cardano Wallet', () => {
         const valid = await wallet.validateAmount({
           address: DESTIONATION_ADDRESS,
           amount: new Amount(2_000000n, wallet.crypto.decimals),
+          price: COIN_PRICE,
         });
         assert.ok(valid);
       });
 
       it('throw on small amount', async () => {
-        sinon.stub(defaultOptions.account, 'request')
+        sinon.stub(defaultOptions, 'request')
           .withArgs({
             seed: 'device',
             method: 'GET',
@@ -329,6 +327,7 @@ describe('Cardano Wallet', () => {
           await wallet.validateAmount({
             address: DESTIONATION_ADDRESS,
             amount: new Amount(0n, wallet.crypto.decimals),
+            price: COIN_PRICE,
           });
         }, {
           name: 'SmallAmountError',
@@ -338,7 +337,7 @@ describe('Cardano Wallet', () => {
       });
 
       it('throw on big amount', async () => {
-        sinon.stub(defaultOptions.account, 'request')
+        sinon.stub(defaultOptions, 'request')
           .withArgs({
             seed: 'device',
             method: 'GET',
@@ -367,6 +366,7 @@ describe('Cardano Wallet', () => {
           await wallet.validateAmount({
             address: DESTIONATION_ADDRESS,
             amount: new Amount(550_000000n, wallet.crypto.decimals),
+            price: COIN_PRICE,
           });
         }, {
           name: 'BigAmountError',
@@ -376,7 +376,7 @@ describe('Cardano Wallet', () => {
       });
 
       it('throw on big amount (unconfirmed)', async () => {
-        sinon.stub(defaultOptions.account, 'request')
+        sinon.stub(defaultOptions, 'request')
           .withArgs({
             seed: 'device',
             method: 'GET',
@@ -405,6 +405,7 @@ describe('Cardano Wallet', () => {
           await wallet.validateAmount({
             address: DESTIONATION_ADDRESS,
             amount: new Amount(550_000000n, wallet.crypto.decimals),
+            price: COIN_PRICE,
           });
         }, {
           name: 'BigAmountConfirmationPendingError',
@@ -417,7 +418,7 @@ describe('Cardano Wallet', () => {
 
   describe('estimateMaxAmount', () => {
     it('should correct estimate max amount', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
@@ -442,12 +443,15 @@ describe('Cardano Wallet', () => {
       await wallet.open(RANDOM_PUBLIC_KEY);
       await wallet.load();
 
-      const maxAmount = await wallet.estimateMaxAmount({ address: DESTIONATION_ADDRESS });
+      const maxAmount = await wallet.estimateMaxAmount({
+        address: DESTIONATION_ADDRESS,
+        price: COIN_PRICE,
+      });
       assert.equal(maxAmount.value, 501_311037n);
     });
 
     it('should estimate max amount to be 0', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
@@ -465,14 +469,17 @@ describe('Cardano Wallet', () => {
       });
       await wallet.open(RANDOM_PUBLIC_KEY);
       await wallet.load();
-      const maxAmount = await wallet.estimateMaxAmount({ address: DESTIONATION_ADDRESS });
+      const maxAmount = await wallet.estimateMaxAmount({
+        address: DESTIONATION_ADDRESS,
+        price: COIN_PRICE,
+      });
       assert.equal(maxAmount.value, 0n);
     });
   });
 
   describe('estimateTransactionFee', () => {
     it('should estimate transaction fee (2 ADA)', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
@@ -499,12 +506,13 @@ describe('Cardano Wallet', () => {
       const fee = await wallet.estimateTransactionFee({
         address: DESTIONATION_ADDRESS,
         amount: new Amount(2_000000n, wallet.crypto.decimals),
+        price: COIN_PRICE,
       });
       assert.equal(fee.value, 1733237n);
     });
 
     it('should estimate transaction fee (max amount)', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
@@ -531,6 +539,7 @@ describe('Cardano Wallet', () => {
       const fee = await wallet.estimateTransactionFee({
         address: DESTIONATION_ADDRESS,
         amount: new Amount(501_311037n, wallet.crypto.decimals),
+        price: COIN_PRICE,
       });
       assert.equal(fee.value, 2_688963n);
     });
@@ -538,7 +547,7 @@ describe('Cardano Wallet', () => {
 
   describe('createTransaction', () => {
     it('should create valid transaction', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
@@ -573,6 +582,7 @@ describe('Cardano Wallet', () => {
       const id = await wallet.createTransaction({
         address: DESTIONATION_ADDRESS,
         amount: new Amount(2_000000, wallet.crypto.decimals),
+        price: COIN_PRICE,
       }, RANDOM_SEED);
       assert.equal(wallet.balance.value, 500_266763n);
       assert.equal(id, '1436860d19064e5388a78384409cf3ebbcb7b99c12ddfef58ebf331ce14b5526');
@@ -581,7 +591,7 @@ describe('Cardano Wallet', () => {
 
   describe('loadTransactions', () => {
     it('should load transactions', async () => {
-      sinon.stub(defaultOptions.account, 'request')
+      sinon.stub(defaultOptions, 'request')
         .withArgs({
           seed: 'device',
           method: 'GET',
